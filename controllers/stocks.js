@@ -5,6 +5,7 @@
 var express = require('express'),
     mongoose = require('../models/mongo'),
     stockModel = require('../models/stockModel'),
+    markitData = require('node-markitondemand'),
     router = express.Router();
 
 /**
@@ -26,7 +27,22 @@ router.get('/', function (req, res) {
         /**
          * send the json object as the response
          */
-        res.send(stocks);
+        var updatedStock = [];
+        stocks.forEach(function (stock) {
+            markitData.lookup(stock.symbol, function (err, stockData) {
+                if (err) {
+                    console.log("ERROR:" + err);
+                    stock.currentprice = 0;
+                } else {
+                    console.log(stock.symbol + " --- " + stockData);
+                    stock.currentprice = 100;
+                }
+                updatedStock.push(stock);
+                if (stocks.length === updatedStock.length) {
+                    res.send(updatedStock);
+                }
+            });
+        });
     });
 });
 
